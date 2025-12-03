@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using static Define;
 
 public class UI_Joystick : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler
 {
@@ -29,6 +30,8 @@ public class UI_Joystick : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 		_background.transform.position = eventData.position;
 		_cursor.transform.position = eventData.position;
 		_touchPos = eventData.position;
+
+		//Debug.Log("OnPointerDown");
 	}
 
 	// 터치 종료 
@@ -39,6 +42,8 @@ public class UI_Joystick : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
 		// 캐릭터 정지 
 		GameManager.Instance.JoystickDir = Vector2.zero;
+
+		//Debug.Log("OnPointerUp");
 	}
 
 	// 드래그 중 
@@ -48,11 +53,12 @@ public class UI_Joystick : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 		Vector2 touchDir = (eventData.position - _touchPos);
 
 		float moveDist = Mathf.Min(touchDir.magnitude, _radius);
-		// 단위 벡터 
 		Vector2 moveDir = touchDir.normalized;
 		Vector2 newPosition = _touchPos + moveDir * moveDist;
 		_cursor.transform.position = newPosition;
 
 		GameManager.Instance.JoystickDir = moveDir;
+
+		//Debug.Log("OnDrag");
 	}
 }

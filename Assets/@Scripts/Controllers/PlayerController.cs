@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using static Define;
 
@@ -17,6 +18,7 @@ public class PlayerController : MonoBehaviour
 	private Animator _animator;
 	private CharacterController _controller;
 	private AudioSource _audioSource;
+	public TrayController Tray { get; private set; }
 
 	private EState _state = EState.None;
 	public EState State
@@ -28,17 +30,20 @@ public class PlayerController : MonoBehaviour
 				return;
 
 			_state = value;
+
 			UpdateAnimation();
 		}
 	}
 
-	public bool IsServing { get; set; } = false;
+	public bool IsServing => Tray.Visible;
 
 	private void Awake()
 	{
 		_animator = GetComponent<Animator>();
 		_controller = GetComponent<CharacterController>();
 		_audioSource = GetComponent<AudioSource>();
+
+		Tray = Utils.FindChild<TrayController>(gameObject);
 	}
 
 	private void Update()
@@ -70,16 +75,28 @@ public class PlayerController : MonoBehaviour
 		transform.position = new Vector3(transform.position.x, 0, transform.position.z);
 	}
 
-	private void UpdateAnimation()
+	int _lastAnim = - 1;
+
+	public void UpdateAnimation()
 	{
+		int nextAnim = -1;
+
 		switch (State)
 		{
 			case EState.Idle:
-				_animator.CrossFade(IsServing ? Define.SERVING_IDLE : Define.IDLE, 0.1f);
+				nextAnim = IsServing ? Define.SERVING_IDLE : Define.IDLE;
+				//_animator.CrossFade(IsServing ? Define.SERVING_IDLE : Define.IDLE, 0.1f);
 				break;
 			case EState.Move:
-				_animator.CrossFade(IsServing ? Define.SERVING_MOVE : Define.MOVE, 0.05f);
+				nextAnim = IsServing ? Define.SERVING_MOVE : Define.MOVE;
+				//_animator.CrossFade(IsServing ? Define.SERVING_MOVE : Define.MOVE, 0.05f);
 				break;
 		}
+
+		if (_lastAnim == nextAnim)
+			return;
+	
+		_animator.CrossFade(nextAnim, 0.01f);
+		_lastAnim = nextAnim;
 	}
 }
