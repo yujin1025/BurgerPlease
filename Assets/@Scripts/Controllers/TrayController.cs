@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static Define;
 
 public class TrayController : MonoBehaviour
 {
@@ -15,37 +16,53 @@ public class TrayController : MonoBehaviour
 	[SerializeField]
 	private float _itemHeight = 0.5f;
 
+	private ETrayObject _trayObject = ETrayObject.None;
+	public ETrayObject CurrentTrayObject
+	{
+		get { return _trayObject; }
+		set 
+		{ 
+			_trayObject = value;
+			switch (value)
+			{
+				case ETrayObject.Trash:
+					_itemHeight = 0.2f;
+					break;
+				case ETrayObject.Burger:
+					_itemHeight = 0.5f;
+					break;
+			}
+		}
+	}
+
 	public int ItemCount => _items.Count; // 쟁반 위에 들고 있는 아이템 개수.
 	public int ReservedCount => _reserved.Count; // 쟁반 위로 이동중.
-	public int TotalItemCount => _reserved.Count + _items.Count; // 쟁반 위로 이동 중인 아이템을 포함한 전체 개수.
+	public int TotalItemCount => _reserved.Count + _items.Count; // 쟁반 위로 이동중인 아이템을 포함한 전체 개수.
 
 	private HashSet<Transform> _reserved = new HashSet<Transform>();
 	private List<Transform> _items = new List<Transform>();
 
+	private MeshRenderer _meshRenderer;
+	private PlayerController _player;
+
+	public bool Visible
+	{
+		set { _meshRenderer.enabled = value; _player?.UpdateAnimation(); }
+		get { return _meshRenderer.enabled; }
+	}
+
 	private void Start()
 	{
-		StartCoroutine(CoTestBurger());
+		_meshRenderer = GetComponent<MeshRenderer>();
+		_player = transform.root.GetComponent<PlayerController>();
+		Visible = false;
 	}
 
-	// TEST
-	public GameObject prefab;
-
-	// TEST
-	IEnumerator CoTestBurger()
-	{
-		for (int i = 0; i < 20; i++)
-		{
-			yield return new WaitForSeconds(0.1f);
-
-			GameObject go = GameObject.Instantiate(prefab);
-			AddToTray(go.transform);
-		}
-
-		yield return null;
-	}
-
+	// 휘는거 조정.
 	private void Update()
 	{
+		Visible = (_items.Count > 0);
+
 		if (_items.Count == 0)
 			return;
 
@@ -70,6 +87,10 @@ public class TrayController : MonoBehaviour
 
 	public void AddToTray(Transform child)
 	{
+		// 운반하는 물체 종류 추적을 위해.
+		if (CurrentTrayObject == ETrayObject.None)
+			CurrentTrayObject = Utils.GetTrayObjectType(child);
+
 		_reserved.Add(child);
 
 		Vector3 dest = transform.position + Vector3.up * TotalItemCount * _itemHeight;
@@ -84,13 +105,19 @@ public class TrayController : MonoBehaviour
 
 	public Transform RemoveFromTray()
 	{
-		if (ItemCount == 0)
+		if (ItemCount == 0 || ReservedCount > 0)
 			return null;
 
 		Transform item = _items.Last();
+		if (item == null)
+			return null;
 
-		_items.Remove(item);
+		_items.RemoveAt(_items.Count - 1);
 
-		return null;
+		// 운반하는 물체 종류 추적을 위해.
+		if (TotalItemCount == 0)
+			CurrentTrayObject = ETrayObject.None;
+
+		return item;
 	}
 }

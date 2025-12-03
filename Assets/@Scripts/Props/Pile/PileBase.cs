@@ -1,11 +1,16 @@
+using DG.Tweening;
+using NUnit.Framework.Internal;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+[RequireComponent(typeof(BoxCollider))]
 public class PileBase : MonoBehaviour
 {
+	#region Fields
 	[SerializeField]
 	private int _row = 2;
 
@@ -16,48 +21,24 @@ public class PileBase : MonoBehaviour
 	private Vector3 _size = new Vector3(0.5f, 0.1f, 0.5f);
 
 	[SerializeField]
-	private float _dropInterval = 0.05f;
+	protected float _dropInterval = 0.05f;
+	#endregion
 
 	protected Stack<GameObject> _objects = new Stack<GameObject>();
 
 	public int ObjectCount => _objects.Count;
-
-	// TEST
-	public GameObject prefab;
-
-	void Start()
-    {
-		StartCoroutine(CoSpawnBurger());
-	}
-
-	// TEST
-	IEnumerator CoSpawnBurger()
+	public void AddToPile(GameObject go, bool jump = false)
 	{
-		for (int i = 0; i < 20; i++)
-		{
-			yield return new WaitForSeconds(0.2f);
-
-			GameObject go = GameObject.Instantiate(prefab);
-			AddToPile(go);
-		}
-
-		for (int i = 0; i < 20; i++)
-		{
-			yield return new WaitForSeconds(0.1f);
-
-			GameObject go = RemoveFromPile();
-			if (go != null)
-				GameObject.Destroy(go);
-		}
-	}
-
-	public void AddToPile(GameObject go)
-	{
-		// 스택에 추가한다 
+		// 스택에 추가한다.
 		_objects.Push(go);
 
-		// 위치를 조정한다 
-		go.transform.position = GetPositionAt(_objects.Count - 1);
+		// 위치를 조정한다.
+		Vector3 pos = GetPositionAt(_objects.Count - 1);
+
+		if (jump)
+			go.transform.DOJump(pos, 5, 1, 0.3f);
+		else
+			go.transform.position = pos;
 	}
 
 	public GameObject RemoveFromPile()
@@ -65,7 +46,7 @@ public class PileBase : MonoBehaviour
 		if (_objects.Count == 0)
 			return null;
 
-		// 스택에서 제거한다
+		// 스택에서 제거한다.
 		return _objects.Pop();
 	}
 
@@ -90,7 +71,7 @@ public class PileBase : MonoBehaviour
 	void OnDrawGizmosSelected()
 	{
 		Vector3 offset = new Vector3((_row - 1) * _size.x / 2, 0, (_column - 1) * _size.z / 2);
-		Vector3 startPos = transform.position - offset; // 0번 칸의 위치
+		Vector3 startPos = transform.position - offset; // 0번 칸의 위치.
 
 		Gizmos.color = Color.yellow;
 
